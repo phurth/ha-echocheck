@@ -1,6 +1,6 @@
 # Home Assistant EchoCheck Tank Sensor (HACS)
 
-EchoCheck BLE propane tank sensor integration for Home Assistant.
+[EchoCheck BLE](https://ghpgroupinc.com/pages/echocheck) propane tank sensor integration for Home Assistant.
 
 This integration connects to EchoCheck tank sensors (BLE name `@TNK*`, manufacturer ID `0x4E54`) via active GATT connection and parses ultrasonic echo measurements to calculate tank level.
 
