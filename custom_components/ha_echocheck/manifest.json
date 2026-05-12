@@ -1,0 +1,31 @@
+{
+  "domain": "ha_echocheck",
+  "name": "EchoCheck Tank Sensor",
+  "codeowners": [
+    "@phurth"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "bluetooth",
+    "bluetooth_adapters"
+  ],
+  "documentation": "https://github.com/phurth/ha-echocheck",
+  "issue_tracker": "https://github.com/phurth/ha-echocheck/issues",
+  "integration_type": "device",
+  "bluetooth": [
+    {
+      "local_name": "@TNK*",
+      "connectable": true
+    },
+    {
+      "manufacturer_id": 20052,
+      "connectable": true
+    }
+  ],
+  "iot_class": "local_push",
+  "requirements": [
+    "bleak>=0.21.0",
+    "bleak-retry-connector>=3.1.0"
+  ],
+  "version": "0.1.0"
+}

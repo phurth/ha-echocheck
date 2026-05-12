@@ -1,0 +1,52 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "EchoCheck Tank Sensor",
+        "description": "Configure an EchoCheck BLE tank sensor.",
+        "data": {
+          "address": "Bluetooth address",
+          "tank_type": "Tank type"
+        }
+      },
+      "confirm": {
+        "title": "Confirm EchoCheck device",
+        "description": "Select your tank type for {name}.",
+        "data": {
+          "tank_type": "Tank type"
+        }
+      },
+      "custom_height": {
+        "title": "Custom tank height",
+        "description": "Enter the usable sensing height of your tank in {unit}.",
+        "data": {
+          "tank_height_mm": "Tank height"
+        }
+      }
+    },
+    "abort": {
+      "not_supported": "Device is not an EchoCheck sensor.",
+      "no_device": "No discovery device available.",
+      "already_configured": "Device is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "EchoCheck options",
+        "description": "Select your tank type.",
+        "data": {
+          "tank_type": "Tank type"
+        }
+      },
+      "custom_height": {
+        "title": "Custom tank height",
+        "description": "Enter the usable sensing height of your tank in {unit}.",
+        "data": {
+          "tank_height_mm": "Tank height"
+        }
+      }
+    }
+  }
+}
+
