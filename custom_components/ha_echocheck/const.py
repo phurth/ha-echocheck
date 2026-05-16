@@ -51,11 +51,11 @@ CUSTOM_TANK_KEY = "custom"
 # Other sizes are approximate, derived from the same ~0.667 ratio to Mopeka.
 # key → (display_name, calibrated_height_mm)
 TANK_SPECS: dict[str, tuple[str, float]] = {
-    "20lb_v":  ("20 lb Vertical (approx)",  169.0),
-    "30lb_v":  ("30 lb Vertical",           254.0),   # confirmed
-    "40lb_v":  ("40 lb Vertical (approx)",  338.0),
-    "100lb_v": ("100 lb Vertical (approx)", 542.0),
-    CUSTOM_TANK_KEY: ("Custom",             254.0),   # user-specified via custom_height step
+    "20lb_v":  ("20 lb Vertical",  169.0),
+    "30lb_v":  ("30 lb Vertical",  254.0),   # confirmed
+    "40lb_v":  ("40 lb Vertical",  338.0),
+    "100lb_v": ("100 lb Vertical", 542.0),
+    CUSTOM_TANK_KEY: ("Custom",    254.0),   # user-specified via custom_height step
 }
 
 # ── Timing ───────────────────────────────────────────────────────────────────
