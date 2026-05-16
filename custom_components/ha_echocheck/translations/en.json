@@ -6,12 +6,19 @@
         "description": "Configure an EchoCheck BLE tank sensor.",
         "data": {
           "address": "Bluetooth address",
-          "tank_height_mm": "Tank height"
+          "tank_type": "Tank type"
         }
       },
       "confirm": {
         "title": "Confirm EchoCheck device",
-        "description": "Set the usable tank height in {unit} for the discovered EchoCheck sensor.",
+        "description": "Select your tank type for {name}.",
+        "data": {
+          "tank_type": "Tank type"
+        }
+      },
+      "custom_height": {
+        "title": "Custom tank height",
+        "description": "Enter the usable sensing height of your tank in {unit}.",
         "data": {
           "tank_height_mm": "Tank height"
         }
@@ -27,7 +34,14 @@
     "step": {
       "init": {
         "title": "EchoCheck options",
-        "description": "Update the usable tank height in {unit}.",
+        "description": "Select your tank type.",
+        "data": {
+          "tank_type": "Tank type"
+        }
+      },
+      "custom_height": {
+        "title": "Custom tank height",
+        "description": "Enter the usable sensing height of your tank in {unit}.",
         "data": {
           "tank_height_mm": "Tank height"
         }
