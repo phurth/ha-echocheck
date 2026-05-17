@@ -152,7 +152,7 @@ class EchoCheckCoordinator(DataUpdateCoordinator[EchoCheckSensorData | None]):
 
         try:
             await client.start_notify(NOTIFY_CHAR_UUID, self._on_notification)
-        except BleakError as err:
+        except (BleakError, TimeoutError, OSError) as err:
             _LOGGER.warning("EchoCheck %s: start_notify failed: %s", self.address, err)
             await self._async_disconnect()
             return
