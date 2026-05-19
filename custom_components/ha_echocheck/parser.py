@@ -68,26 +68,14 @@ def parse_echocheck_notification(
         return None
 
     # ── Tank level ─────────────────────────────────────────────────────────────
-    # field_c is in units of 0.1 mm.  The sensor is mounted at the top of the
-    # tank (at the collar/valve) and measures the air-gap downward to the
-    # propane liquid surface.  The app stores this as "distance" and separately
-    # computes "height = tank_height - distance" (evidenced by the distinct
-    # `(distance: ` and `, height: ` debug strings in the app binary, and by
-    # the setup instruction "*Measure tank height from base to collar").
-    #
-    # Formula:
-    #   distance_mm   = field_c / 10.0          (air gap, sensor → liquid)
-    #   liquid_height = tank_height - distance   (liquid fill height)
-    #   level_percent = liquid_height / tank_height × 100
-    #
-    # Verification with observed data (tank_height = 254 mm):
-    #   field_c = 0x0214 (532) → 53.2 mm air gap → (254-53.2)/254 ≈ 79 % ✓
-    #   field_c = 0x0693 (1683) → 168.3 mm air gap → (254-168.3)/254 ≈ 34 %
+    # field_c is in units of 0.1 mm.  The sensor mounts on the bottom of the
+    # tank and measures the liquid fill height upward from its mounting point.
+    # Divide by 10 to get mm, then express as a percentage of the configured
+    # tank height.
     tank_level_percent: float | None = None
     if field_c > 0 and tank_height_mm is not None and tank_height_mm > 0:
         distance_mm = field_c / 10.0
-        liquid_height_mm = tank_height_mm - distance_mm
-        tank_level_percent = min(100.0, max(0.0, (liquid_height_mm / tank_height_mm) * 100.0))
+        tank_level_percent = min(100.0, max(0.0, (distance_mm / tank_height_mm) * 100.0))
 
     return EchoCheckSensorData(
         mac_address=mac_address,
