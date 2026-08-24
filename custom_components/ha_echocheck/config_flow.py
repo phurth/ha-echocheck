@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import voluptuous as vol
@@ -14,6 +15,7 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFl
 from homeassistant.const import CONF_ADDRESS
 
 from .const import (
+    CONF_ENCRYPTION_KEY,
     CONF_TANK_HEIGHT_MM,
     CONF_TANK_TYPE,
     CUSTOM_TANK_KEY,
@@ -50,6 +52,22 @@ def _custom_height_schema(defaults: dict[str, Any], use_inches: bool) -> vol.Sch
     return vol.Schema({
         vol.Required(CONF_TANK_HEIGHT_MM, default=display_default): validator,
     })
+
+
+def _validate_encryption_key(value: str) -> str:
+    """Validate/normalize the optional AES-128 key (empty or 16 bytes hex).
+
+    Accepts 32 hex chars, optionally colon/space separated. Returns normalized
+    lowercase hex (no separators), or "" to disable verification.
+    """
+    if not isinstance(value, str):
+        raise vol.Invalid("Encryption key must be a string")
+    cleaned = value.strip().replace(":", "").replace(" ", "").lower()
+    if cleaned == "":
+        return ""
+    if re.fullmatch(r"[0-9a-f]{32}", cleaned):
+        return cleaned
+    raise vol.Invalid("Encryption key must be empty or 32 hex characters (16 bytes)")
 
 
 def _is_echocheck_device(info: BluetoothServiceInfoBleak) -> bool:
@@ -166,7 +184,7 @@ class EchoCheckConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class EchoCheckOptionsFlow(OptionsFlow):
-    """Options flow for EchoCheck."""
+    """Options flow for EchoCheck (tank type/height + optional encryption key)."""
 
     def __init__(self, config_entry) -> None:
         self.config_entry = config_entry
@@ -185,8 +203,17 @@ class EchoCheckOptionsFlow(OptionsFlow):
             CONF_TANK_TYPE: self.config_entry.options.get(
                 CONF_TANK_TYPE, self.config_entry.data.get(CONF_TANK_TYPE, "30lb_v")
             ),
+            CONF_ENCRYPTION_KEY: self.config_entry.options.get(
+                CONF_ENCRYPTION_KEY, self.config_entry.data.get(CONF_ENCRYPTION_KEY, "")
+            ),
         }
-        return self.async_show_form(step_id="init", data_schema=_tank_type_schema(defaults))
+        schema = vol.Schema({
+            **_tank_type_schema(defaults).schema,
+            vol.Optional(
+                CONF_ENCRYPTION_KEY, default=defaults[CONF_ENCRYPTION_KEY]
+            ): _validate_encryption_key,
+        })
+        return self.async_show_form(step_id="init", data_schema=schema)
 
     async def async_step_custom_height(
         self, user_input: dict[str, Any] | None = None
@@ -206,5 +233,3 @@ class EchoCheckOptionsFlow(OptionsFlow):
             data_schema=_custom_height_schema({CONF_TANK_HEIGHT_MM: existing_mm}, use_inches),
             description_placeholders={"unit": "inches" if use_inches else "mm"},
         )
-
-    async_discovered_service_info,
