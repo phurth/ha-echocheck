@@ -16,8 +16,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = EchoCheckCoordinator(hass, entry)
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
-    # Fire-and-forget: don't block setup on initial connection.
-    # The heartbeat poll will retry every 30 s if not connected.
+    # Fire-and-forget: don't block setup on the initial firmware read.
     entry.async_create_background_task(
         hass, coordinator.async_start(), "echocheck_initial_connect"
     )
@@ -36,6 +35,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Handle options update (e.g. tank height changed)."""
+    """Handle options update (tank type/height or encryption key changed)."""
     coordinator: EchoCheckCoordinator = hass.data[DOMAIN][entry.entry_id]
-    coordinator.tank_height_mm = float(h) if (h := entry.options.get("tank_height_mm")) else None
+    coordinator.reload_from_entry(entry)
