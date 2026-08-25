@@ -36,10 +36,8 @@ async def async_get_config_entry_diagnostics(
             "last_seen_age_seconds": coordinator.last_seen_age,
         },
         "last_data": {
-            "field_a": data.field_a if data else None,
-            "field_b": data.field_b if data else None,
-            "field_c": data.field_c if data else None,
-            "firmware_version": data.firmware_version if data else None,
+            "raw_us": data.raw_us if data else None,
+            "median_us": data.median_us if data else None,
             "tank_level_percent": data.tank_level_percent if data else None,
             "battery_percent": data.battery_percent if data else None,
             "rssi": data.rssi if data else None,

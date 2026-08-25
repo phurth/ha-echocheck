@@ -34,14 +34,15 @@
     "step": {
       "init": {
         "title": "EchoCheck options",
-        "description": "Select your tank type.",
+        "description": "Select your tank size. Optionally choose a temperature sensor near the tanks: the level reading depends on the speed of sound in propane, which changes with temperature.",
         "data": {
-          "tank_type": "Tank type"
+          "tank_type": "Tank size",
+          "temperature_entity": "Temperature sensor (optional)"
         }
       },
       "custom_height": {
         "title": "Custom tank height",
-        "description": "Enter the usable sensing height of your tank in {unit}.",
+        "description": "Enter the depth of liquid your tank holds when full, in {unit} \u2014 not the cylinder's overall height.",
         "data": {
           "tank_height_mm": "Tank height"
         }

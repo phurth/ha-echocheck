@@ -15,17 +15,14 @@
   "bluetooth": [
     {
       "local_name": "@TNK*",
-      "connectable": true
+      "connectable": false
     },
     {
       "manufacturer_id": 20052,
-      "connectable": true
+      "connectable": false
     }
   ],
   "iot_class": "local_push",
-  "requirements": [
-    "bleak>=0.21.0",
-    "bleak-retry-connector>=3.1.0"
-  ],
-  "version": "1.0.4"
+  "requirements": [],
+  "version": "1.1.0"
 }

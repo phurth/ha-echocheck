@@ -45,6 +45,10 @@ ECHOCHECK_MANUFACTURER_ID = 0x4E54
 #           [15]   XOR checksum of bytes [0:15]
 #   [25]    varies with battery/status changes; NOT the level.
 MANUF_LENGTH = 26
+# Increments on every advertisement; a repeat means the Bluetooth stack replayed
+# a packet we have already seen, which must not be mistaken for a live sensor.
+MANUF_COUNTER_OFFSET = 0
+MANUF_COUNTER_LEN = 2
 MANUF_BATTERY_OFFSET = 6
 MANUF_LEVEL_OFFSET = 4
 MANUF_LEVEL_LEN = 2
@@ -61,22 +65,52 @@ OTA_FW_VERSION_RSP_OPCODE = 0xFF05
 # ── Config entry keys ────────────────────────────────────────────────────────
 CONF_TANK_TYPE = "tank_type"
 CONF_TANK_HEIGHT_MM = "tank_height_mm"
-# AES-128-ECB key for identity verification (optional, user-provided via
-# Options). Not required for battery/level (both are cleartext); it only
-# enables MAC/battery/checksum verification of the identity block.
-CONF_ENCRYPTION_KEY = "encryption_key"
 
 CUSTOM_TANK_KEY = "custom"
 
-# Calibrated fill-height range per standard tank (mm).
-# key → (display_name, calibrated_height_mm)
+# Entity supplying the tank's ambient temperature.  Optional: without it the
+# integration falls back to DEFAULT_ASSUMED_TEMP_C.
+CONF_TEMP_ENTITY = "temperature_entity"
+
+# ── Acoustic model ───────────────────────────────────────────────────────────
+# The sensor reports the ROUND-TRIP flight time of an ultrasonic pulse from the
+# tank floor to the liquid surface and back, in microseconds.  It applies no
+# temperature compensation of its own — there is no temperature field anywhere
+# in its advertisement, and its raw value tracks the speed of sound rather than
+# the liquid depth.
+#
+#   depth_mm = raw_us * c(T) / 2000        (c in m/s, hence the 2000)
+#
+# Confirmed on a 30 lb cylinder: full reads ~715, empty reads 0, and the
+# implied speed of sound at 15.6 °C is ~890 m/s — which is liquid propane.
+# Reading the value as millimetres instead would put 715 mm of liquid inside a
+# bottle whose interior column is ~410 mm.
+#
+# Speed of sound in saturated liquid propane falls roughly linearly with
+# temperature across the range these tanks live in (about 960 m/s at 0 °C,
+# dropping ~4.4 m/s per °C).  Uncompensated, a full tank appears to gain or
+# lose ~0.5 % of level per °C.
+PROPANE_SOUND_SPEED_0C = 960.0      # m/s
+PROPANE_SOUND_SPEED_SLOPE = -4.4    # m/s per °C
+DEFAULT_ASSUMED_TEMP_C = 15.0       # used when no temperature entity is set
+
+# ── Tank fill heights (mm) ───────────────────────────────────────────────────
+# Depth of liquid at which a tank reads 100 %.  These are the empirically
+# calibrated ranges Mopeka uses for the same cylinders (10 / 15 / 20 / 32 inch
+# fill depths), which is the same quantity we need here.  They are NOT the
+# cylinder's overall height: a 30 lb bottle stands ~610 mm tall but holds
+# ~381 mm of liquid when full.
+# key → (display_name, fill_height_mm)
 TANK_SPECS: dict[str, tuple[str, float]] = {
-    "20gal_v": ("20 gal Vertical", 765.0),
-    "20lb_v":  ("20 lb Vertical",  378.0),
-    "30lb_v":  ("30 lb Vertical",  610.0),
-    "40lb_v":  ("40 lb Vertical",  737.0),
-    "100lb_v": ("100 lb Vertical", 1220.0),
-    CUSTOM_TANK_KEY: ("Custom",    765.0),
+    "20lb_v":     ("20 lb Vertical",     254.0),
+    "30lb_v":     ("30 lb Vertical",     381.0),
+    "40lb_v":     ("40 lb Vertical",     508.0),
+    "100lb_v":    ("100 lb Vertical",    812.8),
+    "120gal_v":   ("120 gal Vertical",   974.0),
+    "europe_6kg":  ("6 kg Vertical (EU)",  340.0),
+    "europe_11kg": ("11 kg Vertical (EU)", 390.0),
+    "europe_14kg": ("14 kg Vertical (EU)", 430.0),
+    CUSTOM_TANK_KEY: ("Custom", 381.0),
 }
 
 # ── Timing ───────────────────────────────────────────────────────────────────

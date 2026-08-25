@@ -16,10 +16,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = EchoCheckCoordinator(hass, entry)
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
-    # Fire-and-forget: don't block setup on the initial firmware read.
-    entry.async_create_background_task(
-        hass, coordinator.async_start(), "echocheck_initial_connect"
-    )
+    # Subscribing to advertisements is cheap and synchronous in effect; no
+    # background task and nothing to wait for.
+    await coordinator.async_start()
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True

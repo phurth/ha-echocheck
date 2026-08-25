@@ -52,13 +52,6 @@ SENSOR_DESCRIPTIONS: tuple[EchoCheckSensorDescription, ...] = (
         value_fn=lambda d: d.battery_percent,
     ),
     EchoCheckSensorDescription(
-        key="firmware_version",
-        name="Firmware Version",
-        icon="mdi:tag",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.firmware_version,
-    ),
-    EchoCheckSensorDescription(
         key="rssi",
         name="Signal Strength",
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,

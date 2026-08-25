@@ -2,23 +2,22 @@
 
 [EchoCheck BLE](https://ghpgroupinc.com/pages/echocheck) propane tank sensor integration for Home Assistant.
 
-This integration connects to EchoCheck tank sensors (BLE name `@TNK*`, manufacturer ID `0x4E54`) via active GATT connection and parses ultrasonic echo measurements to calculate tank level.
+This integration reads EchoCheck tank sensors (BLE name `@TNK*`, manufacturer ID `0x4E54`) **passively**, from their BLE advertisements. It never connects to the sensor, which matters for three reasons: a connection makes the sensor stop advertising altogether, it permanently occupies one of your adapter's connection slots, and current sensor firmware sends nothing over a connection anyway.
 
 > **Disclaimer:** This is an independent community integration and is not affiliated with, endorsed by, or supported by Thincke or EchoCheck. Use it at your own risk.
 
 ## Features
 
-- Active GATT BLE connection (works with HA Bluetooth proxies)
-- Tank level percentage from calibrated ultrasonic echo measurement
-- Battery level from BLE advertisement data (no extra GATT read)
-- Firmware version via OTA characteristic exchange
-- Tank type dropdown matching standard propane cylinder sizes
+- **Passive** — no connection, no connection slot, works with any Bluetooth proxy
+- **Temperature compensated** tank level (see below)
+- Works with both older and current sensor firmware
+- Battery level and signal strength from the same advertisement
+- Tank size dropdown for standard propane cylinders, plus custom
 - Multi-sensor support (one config entry per sensor MAC)
 - Sensors:
   - Tank Level (%)
   - Battery (%)
 - Diagnostic entities:
-  - Firmware Version
   - Signal Strength (dBm)
   - Data Healthy (binary sensor)
 
@@ -26,20 +25,41 @@ This integration connects to EchoCheck tank sensors (BLE name `@TNK*`, manufactu
 
 1. Add integration: **EchoCheck Tank Sensor**
 2. Select a discovered BLE device from the dropdown, or enter the MAC address manually
-3. Select tank type from the dropdown
-4. If **Custom** is selected, enter the calibrated fill height in mm
+3. Select your tank size
+4. If **Custom** is selected, enter the depth of liquid your tank holds when full
+5. Optionally select a **temperature sensor** located near your tanks — strongly recommended, see below
 
-## Tank Types
+## Tank Sizes
 
-| Key | Name | Calibrated Height |
-|-----|------|-------------------|
-| `20lb_v` | 20 lb Vertical (approx) | 169 mm |
-| `30lb_v` | 30 lb Vertical | 254 mm |
-| `40lb_v` | 40 lb Vertical (approx) | 338 mm |
-| `100lb_v` | 100 lb Vertical (approx) | 542 mm |
+| Key | Name | Fill height |
+|-----|------|-------------|
+| `20lb_v` | 20 lb Vertical | 254 mm |
+| `30lb_v` | 30 lb Vertical | 381 mm |
+| `40lb_v` | 40 lb Vertical | 508 mm |
+| `100lb_v` | 100 lb Vertical | 812.8 mm |
+| `120gal_v` | 120 gal Vertical | 974 mm |
+| `europe_6kg` / `europe_11kg` / `europe_14kg` | EU cylinders | 340 / 390 / 430 mm |
 | `custom` | Custom | User-specified |
 
-The 30 lb calibrated height (254 mm) is confirmed via cross-validation with a Mopeka sensor on the same tank.
+These are **fill heights** — the depth of liquid a full tank holds — not the cylinder's
+overall height. A 30 lb bottle stands about 610 mm tall but holds roughly 381 mm of
+propane when full, because propane is filled to 80% of volume.
+
+## Why temperature matters
+
+The sensor reports the round-trip flight time of an ultrasonic pulse from the tank
+floor to the liquid surface. Converting that to a depth requires the speed of sound in
+liquid propane, which changes with temperature — roughly 960 m/s at 0 °C, falling about
+4.4 m/s per °C.
+
+The sensor does not measure or compensate for temperature itself. Left uncompensated,
+an untouched tank appears to lose about half a percent of level per degree of warming:
+around **16 percentage points across a 0–40 °C range**. If you have seen a tank slowly
+drift without using any gas, this is why.
+
+Selecting a temperature sensor near your tanks corrects for it. Any temperature entity
+works; one physically close to the tanks is best, since the propane's temperature is
+what matters. Without one, the integration assumes 15 °C.
 
 ## Requirements
 

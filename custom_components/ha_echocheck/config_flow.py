@@ -13,9 +13,11 @@ from homeassistant.components.bluetooth import (
 )
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_ADDRESS
+from homeassistant.helpers import selector
+from homeassistant.util.unit_system import METRIC_SYSTEM
 
 from .const import (
-    CONF_ENCRYPTION_KEY,
+    CONF_TEMP_ENTITY,
     CONF_TANK_HEIGHT_MM,
     CONF_TANK_TYPE,
     CUSTOM_TANK_KEY,
@@ -32,12 +34,24 @@ _TANK_TYPE_LABELS: dict[str, str] = {k: v[0] for k, v in TANK_SPECS.items()}
 
 
 def _display_in_inches(hass) -> bool:
-    return not hass.config.units.is_metric
+    # UnitSystem.is_metric was removed from Home Assistant; compare against the
+    # METRIC_SYSTEM singleton instead.  The old attribute raised AttributeError,
+    # which made the custom-height step fail before it could render.
+    return hass.config.units is not METRIC_SYSTEM
 
 
 def _tank_type_schema(defaults: dict[str, Any]) -> vol.Schema:
+    """Tank size plus the optional temperature entity used for compensation."""
     return vol.Schema({
-        vol.Required(CONF_TANK_TYPE, default=defaults.get(CONF_TANK_TYPE, "30lb_v")): vol.In(_TANK_TYPE_LABELS),
+        vol.Required(
+            CONF_TANK_TYPE, default=defaults.get(CONF_TANK_TYPE, "30lb_v")
+        ): vol.In(_TANK_TYPE_LABELS),
+        vol.Optional(
+            CONF_TEMP_ENTITY,
+            description={"suggested_value": defaults.get(CONF_TEMP_ENTITY)},
+        ): selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="sensor", device_class="temperature")
+        ),
     })
 
 
@@ -52,22 +66,6 @@ def _custom_height_schema(defaults: dict[str, Any], use_inches: bool) -> vol.Sch
     return vol.Schema({
         vol.Required(CONF_TANK_HEIGHT_MM, default=display_default): validator,
     })
-
-
-def _validate_encryption_key(value: str) -> str:
-    """Validate/normalize the optional AES-128 key (empty or 16 bytes hex).
-
-    Accepts 32 hex chars, optionally colon/space separated. Returns normalized
-    lowercase hex (no separators), or "" to disable verification.
-    """
-    if not isinstance(value, str):
-        raise vol.Invalid("Encryption key must be a string")
-    cleaned = value.strip().replace(":", "").replace(" ", "").lower()
-    if cleaned == "":
-        return ""
-    if re.fullmatch(r"[0-9a-f]{32}", cleaned):
-        return cleaned
-    raise vol.Invalid("Encryption key must be empty or 32 hex characters (16 bytes)")
 
 
 def _is_echocheck_device(info: BluetoothServiceInfoBleak) -> bool:
@@ -180,14 +178,15 @@ class EchoCheckConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def async_get_options_flow(config_entry):
-        return EchoCheckOptionsFlow(config_entry)
+        return EchoCheckOptionsFlow()
 
 
 class EchoCheckOptionsFlow(OptionsFlow):
     """Options flow for EchoCheck (tank type/height + optional encryption key)."""
 
-    def __init__(self, config_entry) -> None:
-        self.config_entry = config_entry
+    def __init__(self) -> None:
+        # HA exposes config_entry as a read-only property on OptionsFlow;
+        # assigning it raises AttributeError on current versions.
         self._pending_options: dict[str, Any] = {}
 
     async def async_step_init(
@@ -203,17 +202,16 @@ class EchoCheckOptionsFlow(OptionsFlow):
             CONF_TANK_TYPE: self.config_entry.options.get(
                 CONF_TANK_TYPE, self.config_entry.data.get(CONF_TANK_TYPE, "30lb_v")
             ),
-            CONF_ENCRYPTION_KEY: self.config_entry.options.get(
-                CONF_ENCRYPTION_KEY, self.config_entry.data.get(CONF_ENCRYPTION_KEY, "")
+            CONF_TEMP_ENTITY: self.config_entry.options.get(
+                CONF_TEMP_ENTITY, self.config_entry.data.get(CONF_TEMP_ENTITY)
             ),
         }
-        schema = vol.Schema({
-            **_tank_type_schema(defaults).schema,
-            vol.Optional(
-                CONF_ENCRYPTION_KEY, default=defaults[CONF_ENCRYPTION_KEY]
-            ): _validate_encryption_key,
-        })
-        return self.async_show_form(step_id="init", data_schema=schema)
+        # The encryption key field is deliberately not offered: it is not needed
+        # for level or battery (both cleartext), and passing a bare callable as
+        # the schema type made the whole form unserialisable for the frontend.
+        return self.async_show_form(
+            step_id="init", data_schema=_tank_type_schema(defaults)
+        )
 
     async def async_step_custom_height(
         self, user_input: dict[str, Any] | None = None
