@@ -68,10 +68,19 @@ CONF_ENCRYPTION_KEY = "encryption_key"
 
 CUSTOM_TANK_KEY = "custom"
 
-# Calibrated fill-height range per standard tank (mm).
-# key → (display_name, calibrated_height_mm)
+# Standard full-liquid-height per tank size (mm).  The sensor reports a raw
+# ultrasonic liquid height in mm (it does NOT broadcast a unit or tank size);
+# level % = raw_mm / height * 100, so this table maps a user-chosen size to its
+# standard fill height.  key → (display_name, full_fill_height_mm).
+#
+# Gallon sizes are 14-inch-diameter vertical ASME tanks: fill height = rated
+# gallons (20 gal → 30.0" = 762 mm, James's tanks measured 765 mm; 30 gal →
+# 45.0" = 1143 mm; 40 gal → 60.0" = 1524 mm).  Pound sizes are standard DOT
+# vertical cylinders.  "Custom" lets the user enter their own measured height.
 TANK_SPECS: dict[str, tuple[str, float]] = {
     "20gal_v": ("20 gal Vertical", 765.0),
+    "30gal_v": ("30 gal Vertical", 1143.0),
+    "40gal_v": ("40 gal Vertical", 1524.0),
     "20lb_v":  ("20 lb Vertical",  378.0),
     "30lb_v":  ("30 lb Vertical",  610.0),
     "40lb_v":  ("40 lb Vertical",  737.0),
